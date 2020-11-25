@@ -18,13 +18,13 @@ plugins in this file operate inside the "package" and "install" phases.
          http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.github.lgooddatepicker</groupId>
-    <artifactId>jate-edit</artifactId>
-    <version>1</version>
+    <artifactId>LGoodDatePicker</artifactId>
+    <version>11.1.0</version>
     <packaging>jar</packaging>
     <name>LGoodDatePicker</name>
     <description>Java Swing Date Picker. Easy to use, good looking, nice features, and
         localized. Uses the JSR-310 standard.</description>
-    <url>https://github.com/tomas-ondrusko/LGoodDatePicker.git</url>
+    <url>https://github.com/LGoodDatePicker/LGoodDatePicker</url>
     <licenses>
         <license>
             <name>The MIT License (MIT)</name>
@@ -36,13 +36,13 @@ plugins in this file operate inside the "package" and "install" phases.
             <name>BlakeTNC</name>
             <email>BlakeTNC@gmailRemoveThisNoSpam.com</email>
             <organization>LGoodDatePicker</organization>
-            <organizationUrl>https://github.com/tomas-ondrusko/LGoodDatePicker.git</organizationUrl>
+            <organizationUrl>https://github.com/LGoodDatePicker/LGoodDatePicker</organizationUrl>
         </developer>
     </developers>
     <scm>
-        <connection>scm:git@github.com:tomas-ondrusko/LGoodDatePicker.git</connection>
-        <developerConnection>scm:git@github.com:tomas-ondrusko/LGoodDatePicker.git</developerConnection>
-        <url>git@github.com:tomas-ondrusko/LGoodDatePicker.git</url>
+        <connection>scm:git:git@github.com:LGoodDatePicker/LGoodDatePicker.git</connection>
+        <developerConnection>scm:git:git@github.com:LGoodDatePicker/LGoodDatePicker.git</developerConnection>
+        <url>git@github.com:LGoodDatePicker/LGoodDatePicker.git</url>
     </scm>
 
     <!-- ## Instructions for switching between Java 1.8 releases, and Java 1.6 releases. ##
