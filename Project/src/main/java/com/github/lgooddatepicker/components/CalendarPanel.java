@@ -202,6 +202,15 @@ public class CalendarPanel extends JPanel {
     private JButton doneEditingYearButton;
     // JFormDesigner - End of variables declaration  //GEN-END:variables
 
+    // Edit: tomas-ondrusko
+    // Extracted MouseListener into attribute for better dateLabel handling.
+    private final MouseListener dateLabelMouseListener = new MouseLiberalAdapter() {
+        @Override
+        public void mouseLiberalClick(MouseEvent e) {
+            dateLabelMousePressed(e);
+        }
+    };
+
     /**
      * Constructor, Independent CalendarPanel with default settings. This creates an independent
      * calendar panel with a default set of DatePickerSettings. The calendar panel will use the
@@ -372,12 +381,10 @@ public class CalendarPanel extends JPanel {
             centerPanel.add(dateLabel, constraints);
             dateLabels.add(dateLabel);
             // Add a mouse click listener for every date label, even the blank ones.
-            dateLabel.addMouseListener(new MouseLiberalAdapter() {
-                @Override
-                public void mouseLiberalClick(MouseEvent e) {
-                    dateLabelMousePressed(e);
-                }
-            });
+
+            // Edit: tomas-ondrusko
+            // Moved this line into "drawCalendar(YearMonth, YearMonth)" function.
+            // dateLabel.addMouseListener(dateLabelMouseListener);
         }
     }
 
@@ -764,6 +771,17 @@ public class CalendarPanel extends JPanel {
                 // Set the text for the current date.
                 dateLabel.setText("" + dayOfMonth);
                 ++dayOfMonth;
+
+                // Edit: tomas-ondrusko
+                // Remove dateLabelMouseListener from dateLabel in any case.
+                dateLabel.removeMouseListener(dateLabelMouseListener);
+                if (currentDate.compareTo(LocalDate.now()) < 0) {
+                    // If dateLabel refers to past, change its foreground color to light gray.
+                    dateLabel.setForeground(Color.LIGHT_GRAY);
+                } else {
+                    // Otherwise, add dateLabelMouseListener back.
+                    dateLabel.addMouseListener(dateLabelMouseListener);
+                }
             } else {
                 // We are not inside the valid range, so set this label to an empty string.
                 dateLabel.setText("");
