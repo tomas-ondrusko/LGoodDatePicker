@@ -764,6 +764,7 @@ public class CalendarPanel extends JPanel {
                 // Set the text for the current date.
                 dateLabel.setText("" + dayOfMonth);
                 ++dayOfMonth;
+                dateLabel.setBackground(Color.CYAN);
             } else {
                 // We are not inside the valid range, so set this label to an empty string.
                 dateLabel.setText("");
