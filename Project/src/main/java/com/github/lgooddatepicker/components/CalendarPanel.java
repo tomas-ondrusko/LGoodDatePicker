@@ -202,7 +202,9 @@ public class CalendarPanel extends JPanel {
     private JButton doneEditingYearButton;
     // JFormDesigner - End of variables declaration  //GEN-END:variables
 
-    private final boolean pastEnabled;
+    private boolean pastEnabled = true;
+    private LocalDate disableUntil;
+    private LocalDate disableAfter;
 
     // Extracted MouseListeners into attributes for better dateLabel handling.
     private final MouseListener previousDateLabelMouseListener = new MouseLiberalAdapter() {
@@ -235,9 +237,12 @@ public class CalendarPanel extends JPanel {
         this(null, true, true);
     }
 
-
     public CalendarPanel(boolean enablePast) {
         this(null, true, enablePast);
+    }
+
+    public CalendarPanel(LocalDate disableUntil, LocalDate disableAfter) {
+        this(null, true, disableUntil, disableAfter);
     }
 
     /**
@@ -247,10 +252,6 @@ public class CalendarPanel extends JPanel {
      */
     public CalendarPanel(DatePickerSettings settings) {
         this(settings, true, true);
-    }
-
-    public CalendarPanel(DatePickerSettings settings, boolean enablePast) {
-        this(settings, true, enablePast);
     }
 
     /**
@@ -272,6 +273,10 @@ public class CalendarPanel extends JPanel {
         this(parentDatePicker.getSettings(), false, enablePast);
     }
 
+    public CalendarPanel(DatePicker parentDatePicker, LocalDate disableUntil, LocalDate disableAfter) {
+        this(parentDatePicker.getSettings(), false, disableUntil, disableAfter);
+    }
+
     /**
      * Constructor, Private Full Constructor. This will create the calendar panel instance. This
      * constructor is private and can only be called from other CalendarPanel constructors.
@@ -286,7 +291,20 @@ public class CalendarPanel extends JPanel {
                           boolean isIndependentCalendarPanelInstance,
                           boolean enablePast) {
         pastEnabled = enablePast;
+        initCalendarPanel(datePickerSettings, isIndependentCalendarPanelInstance);
+    }
 
+    private CalendarPanel(DatePickerSettings datePickerSettings,
+                          boolean isIndependentCalendarPanelInstance,
+                          LocalDate disableUntil,
+                          LocalDate disableAfter) {
+        this.disableUntil = disableUntil;
+        this.disableAfter = disableAfter;
+        initCalendarPanel(datePickerSettings, isIndependentCalendarPanelInstance);
+    }
+
+    private void initCalendarPanel(DatePickerSettings datePickerSettings,
+                              boolean isIndependentCalendarPanelInstance) {
         // Save the information of whether this is an independent calendar panel.
         this.isIndependentCalendarPanel = isIndependentCalendarPanelInstance;
 
@@ -302,8 +320,8 @@ public class CalendarPanel extends JPanel {
         yearTextField.setMinimumValue(Year.MIN_VALUE);
         yearTextField.setMargin(new Insets(1, 1, 1, 1));
         yearEditorPanel.add(yearTextField, new GridBagConstraints(0, 0, 1, 1, 0.0, 0.0,
-            GridBagConstraints.CENTER, GridBagConstraints.BOTH,
-            new Insets(0, 0, 0, 0), 0, 0));
+                GridBagConstraints.CENTER, GridBagConstraints.BOTH,
+                new Insets(0, 0, 0, 0), 0, 0));
         // Add the text change listener to the yearTextField.
         yearTextField.numberChangeListener = new IntegerTextFieldNumberChangeListener() {
             @Override
@@ -545,7 +563,7 @@ public class CalendarPanel extends JPanel {
      * dateLabelMousePressed, This event is called any time that the user clicks on a date label in
      * the calendar. This sets the date picker to the selected date, and closes the calendar panel.
      */
-    public void dateLabelMousePressed(MouseEvent e, MonthStatus status) {
+    private void dateLabelMousePressed(MouseEvent e, MonthStatus status) {
         // Get the label that was clicked.
         JLabel label = (JLabel) e.getSource();
 
@@ -892,7 +910,7 @@ public class CalendarPanel extends JPanel {
         this.repaint();
     }
 
-    public void setPreviousMonthDayLabels(int dateLabelArrayIndex, YearMonth currentYearMonth) {
+    private void setPreviousMonthDayLabels(int dateLabelArrayIndex, YearMonth currentYearMonth) {
         YearMonth previousYearMonth = currentYearMonth.minusMonths(1);
         LocalDate previousMonthDate = LocalDate.of(
                 previousYearMonth.getYear(),
@@ -907,7 +925,7 @@ public class CalendarPanel extends JPanel {
         }
     }
 
-    public void setNextMonthDayLabels(int dateLabelArrayIndex, YearMonth currentYearMonth) {
+    private void setNextMonthDayLabels(int dateLabelArrayIndex, YearMonth currentYearMonth) {
         YearMonth nextYearMonth = currentYearMonth.plusMonths(1);
         LocalDate nextMonthDate = LocalDate.of(
                 nextYearMonth.getYear(),
@@ -922,7 +940,7 @@ public class CalendarPanel extends JPanel {
         }
     }
 
-    public void formatLabel(JLabel label, LocalDate currentDate, MonthStatus monthStatus) {
+    private void formatLabel(JLabel label, LocalDate currentDate, MonthStatus monthStatus) {
         removeAllMouseListeners(label);
 
         if (monthStatus != MonthStatus.CURRENT) {
@@ -930,14 +948,17 @@ public class CalendarPanel extends JPanel {
             label.setBackground(new Color(245, 245, 245));
         }
 
-        if (!pastEnabled && currentDate.compareTo(LocalDate.now()) < 0) {
+        if ((disableUntil == null && disableAfter == null && !pastEnabled && currentDate.compareTo(LocalDate.now()) < 0)
+                || (disableUntil != null && currentDate.compareTo(disableUntil) < 0)
+                || (disableAfter != null && currentDate.compareTo(disableAfter) > 0)) {
             label.setForeground(Color.LIGHT_GRAY);
-        } else {
-            setListener(label, monthStatus);
+            return;
         }
+
+        setListener(label, monthStatus);
     }
 
-    public void setListener(JLabel label, MonthStatus monthStatus) {
+    private void setListener(JLabel label, MonthStatus monthStatus) {
         switch (monthStatus) {
             case CURRENT:
                 label.addMouseListener(currentDateLabelMouseListener);
@@ -951,7 +972,7 @@ public class CalendarPanel extends JPanel {
         }
     }
 
-    public void removeAllMouseListeners(JLabel label) {
+    private void removeAllMouseListeners(JLabel label) {
         label.removeMouseListener(previousDateLabelMouseListener);
         label.removeMouseListener(currentDateLabelMouseListener);
         label.removeMouseListener(nextDateLabelMouseListener);
