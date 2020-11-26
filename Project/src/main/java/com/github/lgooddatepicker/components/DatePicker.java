@@ -137,12 +137,18 @@ public class DatePicker extends JPanel implements CustomPopupCloseListener {
     private JButton toggleCalendarButton;
     // JFormDesigner - End of variables declaration  //GEN-END:variables
 
+    private boolean pastEnabled;
+
     /**
      * Constructor with Default Values, Create a date picker instance using the default operating
      * system locale and language, and default date picker settings.
      */
     public DatePicker() {
-        this(null);
+        this(null, true);
+    }
+
+    public DatePicker(boolean enablePast) {
+        this(null, enablePast);
     }
 
     /**
@@ -150,6 +156,15 @@ public class DatePicker extends JPanel implements CustomPopupCloseListener {
      * picker settings.
      */
     public DatePicker(DatePickerSettings settings) {
+        initDatePicker(settings);
+    }
+
+    public DatePicker(DatePickerSettings settings, boolean enablePast) {
+        pastEnabled = enablePast;
+        initDatePicker(settings);
+    }
+
+    public void initDatePicker(DatePickerSettings settings) {
         initComponents();
         this.convert = new Convert(this);
         // Shrink the toggle calendar button to a reasonable size.
@@ -488,7 +503,7 @@ public class DatePicker extends JPanel implements CustomPopupCloseListener {
         // Create a new calendar panel. 
         // Use the CalendarPanel constructor that is made for the DatePicker class.
         DatePicker thisDatePicker = this;
-        calendarPanel = new CalendarPanel(thisDatePicker);
+        calendarPanel = new CalendarPanel(thisDatePicker, pastEnabled);
 
         fireComponentEvent(new ComponentEvent(ComponentEvent.PREVIOUS_YEAR, calendarPanel.getPreviousYearButton()));
         fireComponentEvent(new ComponentEvent(ComponentEvent.PREVIOUS_MONTH, calendarPanel.getPreviousMonthButton()));
