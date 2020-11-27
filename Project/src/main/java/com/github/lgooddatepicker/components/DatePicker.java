@@ -173,7 +173,7 @@ public class DatePicker extends JPanel implements CustomPopupCloseListener {
     public DatePicker(DatePickerSettings settings, LocalDate disableUntil, LocalDate disableAfter) {
         this.disableUntil = disableUntil;
         this.disableAfter = disableAfter;
-        if (disableUntil.compareTo(disableAfter) > 0) {
+        if (disableUntil != null && disableAfter != null && disableUntil.compareTo(disableAfter) > 0) {
             throw new IllegalArgumentException("Invalid dates" + "\n" +
                     "Disable until: " + disableUntil + "\n" +
                     "Disable after: " + disableAfter);
