@@ -202,8 +202,22 @@ public class CalendarPanel extends JPanel {
     private JButton doneEditingYearButton;
     // JFormDesigner - End of variables declaration  //GEN-END:variables
 
+    /**
+     * pastEnabled, This indicates whether the user decided
+     * to disable the past by passing boolean argument false or not.
+     */
     private boolean pastEnabled = true;
+
+    /**
+     * disableUntil, This indicates whether the user decided
+     * to disable all dates until the input LocalDate value.
+     */
     private LocalDate disableUntil;
+
+    /**
+     * disableAfter, This indicates whether the user decided
+     * to disable all dates after the input LocalDate value.
+     */
     private LocalDate disableAfter;
 
     // Extracted MouseListeners into attributes for better dateLabel handling.
@@ -232,9 +246,11 @@ public class CalendarPanel extends JPanel {
      * Constructor, Independent CalendarPanel with default settings. This creates an independent
      * calendar panel with a default set of DatePickerSettings. The calendar panel will use the
      * default operating system locale and language.
+     *
+     * Optionally pass enablePast or disableUntil and disableAfter attributes.
      */
     public CalendarPanel() {
-        this(null, true, true);
+        this(null, true, null, null);
     }
 
     public CalendarPanel(boolean enablePast) {
@@ -249,9 +265,19 @@ public class CalendarPanel extends JPanel {
      * Constructor, Independent CalendarPanel with supplied settings. This creates This creates an
      * independent calendar panel with the supplied date picker settings. If the datePickerSettings
      * are null, then a default settings instance will be created and applied to the CalendarPanel.
+     *
+     * Optionally pass enablePast or disableUntil and disableAfter attributes.
      */
     public CalendarPanel(DatePickerSettings settings) {
-        this(settings, true, true);
+        this(settings, true, null, null);
+    }
+
+    public CalendarPanel(DatePickerSettings settings, boolean enablePast) {
+        this(settings, true, enablePast);
+    }
+
+    public CalendarPanel(DatePickerSettings settings, LocalDate disableUntil, LocalDate disableAfter) {
+        this(settings, true, disableUntil, disableAfter);
     }
 
     /**
@@ -264,9 +290,11 @@ public class CalendarPanel extends JPanel {
      * new CalendarPanel is created every time the popup is opened. Therefore, any
      * DatePickerSettings variables that are initialized in this constructor are automatically able
      * to correctly handle being set either before or after, a DatePicker is constructed.
+     *
+     * Optionally pass enablePast or disableUntil and disableAfter attributes.
      */
     public CalendarPanel(DatePicker parentDatePicker) {
-        this(parentDatePicker.getSettings(), false, true);
+        this(parentDatePicker.getSettings(), false, null, null);
     }
 
     public CalendarPanel(DatePicker parentDatePicker, boolean enablePast) {
@@ -283,6 +311,8 @@ public class CalendarPanel extends JPanel {
      *
      * Note: None of the functions called from constructor, (or any functions called from those
      * functions) should depend on any settings variables.
+     *
+     * Update the pastEnabled or disableUntil and disableAfter attributes.
      *
      * Exceptions to the above rule: # The setSettings() function. # Targets of listener functions.
      *
@@ -303,6 +333,9 @@ public class CalendarPanel extends JPanel {
         initCalendarPanel(datePickerSettings, isIndependentCalendarPanelInstance);
     }
 
+    /**
+     * Initialize the CalendarPanel using the supplied date picker settings.
+     */
     private void initCalendarPanel(DatePickerSettings datePickerSettings,
                               boolean isIndependentCalendarPanelInstance) {
         // Save the information of whether this is an independent calendar panel.
@@ -568,15 +601,16 @@ public class CalendarPanel extends JPanel {
         JLabel label = (JLabel) e.getSource();
 
         String labelText = label.getText();
-        // We have a label with a specific date, so set the date and close the calendar.
+        // We have a label with a specific date, so fix the date and close the calendar.
         int year = displayedYearMonth.getYear();
         Month month = displayedYearMonth.getMonth();
         int dayOfMonth = Integer.parseInt(labelText);
 
-        // Fix year.
+        // Fix previous year gap.
         if (status.getValue() < 0 && month == Month.JANUARY) {
             year--;
         }
+        // Fix next year gap.
         if (status.getValue() > 0 && month == Month.DECEMBER) {
             year++;
         }
@@ -742,7 +776,7 @@ public class CalendarPanel extends JPanel {
         DateVetoPolicy vetoPolicy = settings.getVetoPolicy();
         DateHighlightPolicy highlightPolicy = settings.getHighlightPolicy();
 
-        boolean fixedPreviousMonth = false;
+        boolean previousMonthDateLabelsSet = false;
         for (int dateLabelArrayIndex = 0; dateLabelArrayIndex < dateLabels.size(); ++dateLabelArrayIndex) {
             // Get the current date label.
             JLabel dateLabel = dateLabels.get(dateLabelArrayIndex);
@@ -772,8 +806,9 @@ public class CalendarPanel extends JPanel {
                 // Notes: The first day of the month will always be in the first row.
                 // The first day of the month will only occur once while inside the valid range.
                 if (dayOfMonth == 1) {
-                    setPreviousMonthDayLabels(dateLabelArrayIndex, YearMonth.of(displayedYear, displayedMonth));
-                    fixedPreviousMonth = true;
+                    previousMonthDateLabelsSet = setPreviousMonthDayLabels(
+                            dateLabelArrayIndex,
+                            YearMonth.of(displayedYear,displayedMonth));
                     // The first date of the first row will often be a date from the previous month.
                     // The first date label will often not have a displayed date.
                     // We encompass this in a try block, so that LocalDate.MIN will not throw an
@@ -829,12 +864,12 @@ public class CalendarPanel extends JPanel {
                     selectedDateLabel = dateLabel;
                 }
                 // Set the text for the current date.
-                dateLabel.setText("" + dayOfMonth);
-                formatLabel(dateLabel, currentDate, MonthStatus.CURRENT);
-                dayOfMonth++;
+                dateLabel.setText("" + dayOfMonth++);
+                updateLabel(dateLabel, currentDate, MonthStatus.CURRENT);
                 continue;
             }
-            if (fixedPreviousMonth) {
+            // If the date labels for previous month are set, set the date labels for next month and break.
+            if (previousMonthDateLabelsSet) {
                 setNextMonthDayLabels(dateLabelArrayIndex, YearMonth.of(displayedYear, displayedMonth));
                 break;
             }
@@ -910,72 +945,111 @@ public class CalendarPanel extends JPanel {
         this.repaint();
     }
 
-    private void setPreviousMonthDayLabels(int dateLabelArrayIndex, YearMonth currentYearMonth) {
+    /**
+     * Set the date labels for previous month.
+     *
+     * @param dateLabelArrayIndex current index
+     * @param currentYearMonth displayed year and month
+     * @return true after completion
+     */
+    private boolean setPreviousMonthDayLabels(int dateLabelArrayIndex, YearMonth currentYearMonth) {
+        // Create LocalDate variable for the last day of previous month.
         YearMonth previousYearMonth = currentYearMonth.minusMonths(1);
         LocalDate previousMonthDate = LocalDate.of(
                 previousYearMonth.getYear(),
                 previousYearMonth.getMonth(),
                 previousYearMonth.lengthOfMonth());
 
+        // Set the visible date labels of previous month backwards (e.g. Previous month is september -> 30, 29, 28,...)
         for (int i = 0; i < dateLabelArrayIndex; i++) {
             JLabel label = dateLabels.get(dateLabelArrayIndex - i - 1);
             label.setText("" + previousMonthDate.getDayOfMonth());
-            formatLabel(label, previousMonthDate, MonthStatus.PREVIOUS);
+            updateLabel(label, previousMonthDate, MonthStatus.PREVIOUS);
             previousMonthDate = previousMonthDate.minusDays(1);
         }
+
+        return true;
     }
 
+    /**
+     * Set the date labels for next month.
+     *
+     * @param dateLabelArrayIndex current index
+     * @param currentYearMonth displayed year and month
+     */
     private void setNextMonthDayLabels(int dateLabelArrayIndex, YearMonth currentYearMonth) {
+        // Create LocalDate variable for the first day of next month.
         YearMonth nextYearMonth = currentYearMonth.plusMonths(1);
         LocalDate nextMonthDate = LocalDate.of(
                 nextYearMonth.getYear(),
                 nextYearMonth.getMonth(),
                 1);
 
+        // Set the visible date labels of next month (e.g. Next month is "whatever" -> 1, 2, 3,...)
         for (int i = dateLabelArrayIndex; i < dateLabels.size(); i++) {
             JLabel label = dateLabels.get(i);
             label.setText("" + nextMonthDate.getDayOfMonth());
-            formatLabel(label, nextMonthDate, MonthStatus.NEXT);
+            updateLabel(label, nextMonthDate, MonthStatus.NEXT);
             nextMonthDate = nextMonthDate.plusDays(1);
         }
     }
 
-    private void formatLabel(JLabel label, LocalDate currentDate, MonthStatus monthStatus) {
-        removeAllMouseListeners(label);
+    /**
+     * Update foreground and background of the dateLabel.
+     * Add concrete MouseListener to the dateLabel if necessary.
+     *
+     * @param dateLabel current dateLabel
+     * @param currentDate currently processed LocalDate date
+     * @param monthStatus PREVIOUS, CURRENT or NEXT
+     */
+    private void updateLabel(JLabel dateLabel, LocalDate currentDate, MonthStatus monthStatus) {
+        removeAllMouseListeners(dateLabel);
 
+        // Set foreground and background for previous and next month dateLabels.
         if (monthStatus != MonthStatus.CURRENT) {
-            label.setForeground(Color.GRAY);
-            label.setBackground(new Color(245, 245, 245));
+            dateLabel.setForeground(Color.GRAY);
+            dateLabel.setBackground(new Color(245, 245, 245));
         }
 
-        if ((disableUntil == null && disableAfter == null && !pastEnabled && currentDate.compareTo(LocalDate.now()) < 0)
+        if ((!pastEnabled && currentDate.compareTo(LocalDate.now()) < 0)
                 || (disableUntil != null && currentDate.compareTo(disableUntil) < 0)
                 || (disableAfter != null && currentDate.compareTo(disableAfter) > 0)) {
-            label.setForeground(Color.LIGHT_GRAY);
+            // Update foreground of the disabled dateLabel and return.
+            dateLabel.setForeground(Color.LIGHT_GRAY);
             return;
         }
 
-        setListener(label, monthStatus);
+        // Otherwise, add MouseListener to the dateLabel
+        setListener(dateLabel, monthStatus);
     }
 
-    private void setListener(JLabel label, MonthStatus monthStatus) {
+    /**
+     * Add MouseListener to the dateLabel depending on the monthStatus.
+     *
+     * @param dateLabel current dateLabel
+     * @param monthStatus PREVIOUS, CURRENT or NEXT
+     */
+    private void setListener(JLabel dateLabel, MonthStatus monthStatus) {
         switch (monthStatus) {
             case CURRENT:
-                label.addMouseListener(currentDateLabelMouseListener);
+                dateLabel.addMouseListener(currentDateLabelMouseListener);
                 return;
             case PREVIOUS:
-                label.addMouseListener(previousDateLabelMouseListener);
+                dateLabel.addMouseListener(previousDateLabelMouseListener);
                 break;
             case NEXT:
-                label.addMouseListener(nextDateLabelMouseListener);
+                dateLabel.addMouseListener(nextDateLabelMouseListener);
                 break;
         }
     }
 
-    private void removeAllMouseListeners(JLabel label) {
-        label.removeMouseListener(previousDateLabelMouseListener);
-        label.removeMouseListener(currentDateLabelMouseListener);
-        label.removeMouseListener(nextDateLabelMouseListener);
+    /**
+     * Remove all MouseListeners from dateLabel.
+     */
+    private void removeAllMouseListeners(JLabel dateLabel) {
+        dateLabel.removeMouseListener(previousDateLabelMouseListener);
+        dateLabel.removeMouseListener(currentDateLabelMouseListener);
+        dateLabel.removeMouseListener(nextDateLabelMouseListener);
     }
 
     /**
