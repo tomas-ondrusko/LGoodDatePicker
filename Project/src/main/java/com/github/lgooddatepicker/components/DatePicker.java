@@ -1,33 +1,42 @@
 package com.github.lgooddatepicker.components;
 
-import com.privatejgoodies.forms.layout.FormLayout;
-import com.privatejgoodies.forms.factories.CC;
-import java.awt.event.*;
-import javax.swing.border.*;
-import com.github.lgooddatepicker.zinternaltools.*;
 import com.github.lgooddatepicker.components.DatePickerSettings.DateArea;
 import com.github.lgooddatepicker.optionalusertools.DateChangeListener;
-import com.github.lgooddatepicker.optionalusertools.PickerUtilities;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
-import java.util.ArrayList;
 import com.github.lgooddatepicker.optionalusertools.DateVetoPolicy;
+import com.github.lgooddatepicker.optionalusertools.PickerUtilities;
 import com.github.lgooddatepicker.zinternaltools.CalculateMinimumDateFieldSize;
+import com.github.lgooddatepicker.zinternaltools.Convert;
+import com.github.lgooddatepicker.zinternaltools.CustomPopup;
 import com.github.lgooddatepicker.zinternaltools.CustomPopup.CustomPopupCloseListener;
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.Insets;
-import java.awt.Rectangle;
-import java.awt.Window;
-import java.time.Instant;
-import java.time.LocalDate;
-import java.time.chrono.IsoEra;
-import java.util.Locale;
+import com.github.lgooddatepicker.zinternaltools.DateChangeEvent;
+import com.github.lgooddatepicker.zinternaltools.InternalUtilities;
+import com.privatejgoodies.forms.factories.CC;
+import com.privatejgoodies.forms.layout.FormLayout;
+
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
+import javax.swing.border.CompoundBorder;
+import javax.swing.border.EmptyBorder;
+import javax.swing.border.MatteBorder;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Insets;
+import java.awt.Rectangle;
+import java.awt.Window;
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.chrono.IsoEra;
+import java.util.ArrayList;
+import java.util.Locale;
 
 /**
  * DatePicker, This class implements a date picker GUI component.
@@ -182,15 +191,15 @@ public class DatePicker extends JPanel implements CustomPopupCloseListener {
     public DatePicker(DatePickerSettings settings, LocalDate disableUntil, LocalDate disableAfter) {
         this.disableUntil = disableUntil;
         this.disableAfter = disableAfter;
-        validateInputDates(disableUntil, disableAfter);
+        validateDates();
 
         initDatePicker(settings);
     }
 
     /**
-     * Validate the input values of disableUntil and disableAfter attributes.
+     * Validate the values of disableUntil and disableAfter attributes.
      */
-    private void validateInputDates(LocalDate disableUntil, LocalDate disableAfter) {
+    private void validateDates() {
         if (disableUntil != null && disableAfter != null && disableUntil.compareTo(disableAfter) > 0) {
             throw new IllegalArgumentException("Invalid dates" + "\n" +
                     "Disable until: " + disableUntil + "\n" +
@@ -695,6 +704,22 @@ public class DatePicker extends JPanel implements CustomPopupCloseListener {
             // This will clear the text field if the last valid date is null.
             setDate(lastValidDate);
         }
+    }
+
+    /**
+     * Update disableUntil attribute and validate.
+     */
+    public void disableUntil(LocalDate disableUntil) {
+        this.disableUntil = disableUntil;
+        validateDates();
+    }
+
+    /**
+     * Update disableAfter attribute and validate.
+     */
+    public void disableAfter(LocalDate disableAfter) {
+        this.disableAfter = disableAfter;
+        validateDates();
     }
 
     /**
