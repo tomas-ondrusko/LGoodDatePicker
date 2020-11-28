@@ -138,12 +138,6 @@ public class DatePicker extends JPanel implements CustomPopupCloseListener {
     // JFormDesigner - End of variables declaration  //GEN-END:variables
 
     /**
-     * pastEnabled, This indicates whether the user decided
-     * to disable the past by passing boolean argument false or not.
-     */
-    private boolean pastEnabled = true;
-
-    /**
      * disableUntil, This indicates whether the user decided
      * to disable all dates until the input LocalDate value.
      */
@@ -164,14 +158,6 @@ public class DatePicker extends JPanel implements CustomPopupCloseListener {
     }
 
     /**
-     * Constructor with boolean parameter, Create a date picker instance where the input value
-     * indicates if the past should be enabled or not.
-     */
-    public DatePicker(boolean enablePast) {
-        this(null, enablePast);
-    }
-
-    /**
      * Constructor with two LocalDate parameters, Create a date picker instance where the two
      * input values indicates if a certain date period should be disabled.
      * @param disableUntil disable all dates until this value
@@ -186,15 +172,6 @@ public class DatePicker extends JPanel implements CustomPopupCloseListener {
      * picker settings.
      */
     public DatePicker(DatePickerSettings settings) {
-        initDatePicker(settings);
-    }
-
-    /**
-     * Constructor with Custom Settings, Create a date picker instance using the supplied date
-     * picker settings and update the pastEnabled boolean attribute.
-     */
-    public DatePicker(DatePickerSettings settings, boolean enablePast) {
-        pastEnabled = enablePast;
         initDatePicker(settings);
     }
 
@@ -560,12 +537,9 @@ public class DatePicker extends JPanel implements CustomPopupCloseListener {
         }
         // Get the last valid date, to pass to the calendar if needed.
         LocalDate selectedDateForCalendar = lastValidDate;
-        // Create a new calendar panel. 
-        // Depending on pastEnabled attribute, instantiate the CalenderPanel for the DatePicker class.
-        DatePicker thisDatePicker = this;
-        calendarPanel = (!pastEnabled) ?
-                new CalendarPanel(thisDatePicker, false) :
-                new CalendarPanel(thisDatePicker, disableUntil, disableAfter);
+
+        // Create a CalenderPanel for this DatePicker class.
+        calendarPanel = new CalendarPanel(this, disableUntil, disableAfter);
 
         fireComponentEvent(new ComponentEvent(ComponentEvent.PREVIOUS_YEAR, calendarPanel.getPreviousYearButton()));
         fireComponentEvent(new ComponentEvent(ComponentEvent.PREVIOUS_MONTH, calendarPanel.getPreviousMonthButton()));
