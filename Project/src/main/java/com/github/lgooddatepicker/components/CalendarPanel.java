@@ -927,7 +927,9 @@ public class CalendarPanel extends JPanel {
         // If today is vetoed, disable the today button.
         boolean todayIsVetoed = InternalUtilities.isDateVetoed(
             vetoPolicy, LocalDate.now(settings.getClock()));
-        labelSetDateToToday.setEnabled(!todayIsVetoed);
+
+        // Commented for proper functionality of version 3.1.1 (https://github.com/tomas-ondrusko/LGoodDatePicker)
+        // labelSetDateToToday.setEnabled(!todayIsVetoed);
 
         // Set the visibility of all the calendar control buttons (and button labels).
         zApplyVisibilityOfButtons();
@@ -1501,10 +1503,10 @@ public class CalendarPanel extends JPanel {
      *
      */
     private void zAddMouseListenersToTodayAndClearButtons() {
-        labelSetDateToToday.addMouseListener(new MouseLiberalAdapter() {
+        labelClearDate.addMouseListener(new MouseLiberalAdapter() {
             @Override
             public void mouseLiberalClick(MouseEvent e) {
-                labelSetDateToTodayMousePressed(e);
+                labelClearDateMousePressed(e);
             }
 
             @Override
@@ -1517,10 +1519,18 @@ public class CalendarPanel extends JPanel {
                 labelIndicatorMouseExited(e);
             }
         });
-        labelClearDate.addMouseListener(new MouseLiberalAdapter() {
+
+        if ((disableUntil != null && disableUntil.compareTo(LocalDate.now()) > 0)
+                || (disableAfter != null && disableAfter.compareTo(LocalDate.now()) < 0)) {
+            labelSetDateToToday.setEnabled(false);
+            return;
+        }
+
+        labelSetDateToToday.setEnabled(true);
+        labelSetDateToToday.addMouseListener(new MouseLiberalAdapter() {
             @Override
             public void mouseLiberalClick(MouseEvent e) {
-                labelClearDateMousePressed(e);
+                labelSetDateToTodayMousePressed(e);
             }
 
             @Override
