@@ -778,7 +778,7 @@ public class CalendarPanel extends JPanel {
         DateVetoPolicy vetoPolicy = settings.getVetoPolicy();
         DateHighlightPolicy highlightPolicy = settings.getHighlightPolicy();
 
-        boolean previousMonthDateLabelsSet = false;
+        boolean dateLabelsForPreviousMonthSet = false;
         for (int dateLabelArrayIndex = 0; dateLabelArrayIndex < dateLabels.size(); ++dateLabelArrayIndex) {
             // Get the current date label.
             JLabel dateLabel = dateLabels.get(dateLabelArrayIndex);
@@ -808,7 +808,7 @@ public class CalendarPanel extends JPanel {
                 // Notes: The first day of the month will always be in the first row.
                 // The first day of the month will only occur once while inside the valid range.
                 if (dayOfMonth == 1) {
-                    previousMonthDateLabelsSet = setPreviousMonthDayLabels(
+                    dateLabelsForPreviousMonthSet = setDateLabelsForPreviousMonth(
                             dateLabelArrayIndex,
                             YearMonth.of(displayedYear,displayedMonth));
                     // The first date of the first row will often be a date from the previous month.
@@ -833,12 +833,13 @@ public class CalendarPanel extends JPanel {
                 if (highlightPolicy != null) {
                     highlightInfo = highlightPolicy.getHighlightInformationOrNull(currentDate);
                 }
-                if (dateIsVetoed) {
-                    dateLabel.setEnabled(false);
-                    dateLabel.setBackground(settings.getColor(DateArea.CalendarBackgroundVetoedDates));
-                    // Note, the foreground color of a disabled date label will always be grey.
-                    // So it is not easily possible let the programmer customize that color.
-                }
+// Commented for proper functionality of version 3.1.2 (https://github.com/tomas-ondrusko/LGoodDatePicker)
+//                if (dateIsVetoed) {
+//                    dateLabel.setEnabled(false);
+//                    dateLabel.setBackground(settings.getColor(DateArea.CalendarBackgroundVetoedDates));
+//                    // Note, the foreground color of a disabled date label will always be grey.
+//                    // So it is not easily possible let the programmer customize that color.
+//                }
                 if ((!dateIsVetoed) && (highlightInfo != null)) {
                     // Get the "modifiable default" highlight and background colors from settings.
                     Color colorBackground = settings.getColor(DateArea.CalendarDefaultBackgroundHighlightedDates);
@@ -871,8 +872,8 @@ public class CalendarPanel extends JPanel {
                 continue;
             }
             // If the date labels for previous month are set, set the date labels for next month and break.
-            if (previousMonthDateLabelsSet) {
-                setNextMonthDayLabels(dateLabelArrayIndex, YearMonth.of(displayedYear, displayedMonth));
+            if (dateLabelsForPreviousMonthSet) {
+                setDateLabelsForNextMonth(dateLabelArrayIndex, YearMonth.of(displayedYear, displayedMonth));
                 break;
             }
         }
@@ -928,8 +929,8 @@ public class CalendarPanel extends JPanel {
         boolean todayIsVetoed = InternalUtilities.isDateVetoed(
             vetoPolicy, LocalDate.now(settings.getClock()));
 
-        // Commented for proper functionality of version 3.1.1 (https://github.com/tomas-ondrusko/LGoodDatePicker)
-        // labelSetDateToToday.setEnabled(!todayIsVetoed);
+// Commented for proper functionality of version 3.1.1 (https://github.com/tomas-ondrusko/LGoodDatePicker)
+//        labelSetDateToToday.setEnabled(!todayIsVetoed);
 
         // Set the visibility of all the calendar control buttons (and button labels).
         zApplyVisibilityOfButtons();
@@ -950,13 +951,11 @@ public class CalendarPanel extends JPanel {
     }
 
     /**
-     * Set the date labels for previous month.
-     *
      * @param dateLabelArrayIndex current index
      * @param currentYearMonth displayed year and month
      * @return true after completion
      */
-    private boolean setPreviousMonthDayLabels(int dateLabelArrayIndex, YearMonth currentYearMonth) {
+    private boolean setDateLabelsForPreviousMonth(int dateLabelArrayIndex, YearMonth currentYearMonth) {
         // Create LocalDate variable for the last day of previous month.
         YearMonth previousYearMonth = currentYearMonth.minusMonths(1);
         LocalDate previousMonthDate = LocalDate.of(
@@ -976,12 +975,10 @@ public class CalendarPanel extends JPanel {
     }
 
     /**
-     * Set the date labels for next month.
-     *
      * @param dateLabelArrayIndex current index
      * @param currentYearMonth displayed year and month
      */
-    private void setNextMonthDayLabels(int dateLabelArrayIndex, YearMonth currentYearMonth) {
+    private void setDateLabelsForNextMonth(int dateLabelArrayIndex, YearMonth currentYearMonth) {
         // Create LocalDate variable for the first day of next month.
         YearMonth nextYearMonth = currentYearMonth.plusMonths(1);
         LocalDate nextMonthDate = LocalDate.of(
@@ -1015,7 +1012,8 @@ public class CalendarPanel extends JPanel {
             dateLabel.setBackground(new Color(245, 245, 245));
         }
 
-        if ((disableUntil != null && currentDate.compareTo(disableUntil) < 0)
+        if (InternalUtilities.isDateVetoed(settings.getVetoPolicy(), currentDate)
+                || (disableUntil != null && currentDate.compareTo(disableUntil) < 0)
                 || (disableAfter != null && currentDate.compareTo(disableAfter) > 0)) {
             // Update foreground of the disabled dateLabel and return.
             dateLabel.setForeground(Color.LIGHT_GRAY);
@@ -1050,6 +1048,8 @@ public class CalendarPanel extends JPanel {
      * Remove all MouseListeners from dateLabel.
      */
     private void removeAllMouseListeners(JLabel dateLabel) {
+        // Calling of these functions is necessary because the date labels are neither enabled nor disabled.
+        // (It's caused by the color change of the disabled or vetoed dates)
         dateLabel.removeMouseListener(previousDateLabelMouseListener);
         dateLabel.removeMouseListener(currentDateLabelMouseListener);
         dateLabel.removeMouseListener(nextDateLabelMouseListener);
@@ -1520,7 +1520,8 @@ public class CalendarPanel extends JPanel {
             }
         });
 
-        if ((disableUntil != null && disableUntil.compareTo(LocalDate.now()) > 0)
+        if ((settings != null && InternalUtilities.isDateVetoed(settings.getVetoPolicy(), LocalDate.now(settings.getClock())))
+                || (disableUntil != null && disableUntil.compareTo(LocalDate.now()) > 0)
                 || (disableAfter != null && disableAfter.compareTo(LocalDate.now()) < 0)) {
             labelSetDateToToday.setEnabled(false);
             return;
