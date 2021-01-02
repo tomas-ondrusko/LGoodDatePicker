@@ -616,6 +616,18 @@ public class DatePickerSettings {
     private boolean zSkipDrawIndependentCalendarPanelIfNeeded = false;
 
     /**
+     * disableUntil, This indicates whether the user decided
+     * to disable all dates until the input LocalDate value.
+     */
+    private LocalDate disableUntil = null;
+
+    /**
+     * disableAfter, This indicates whether the user decided
+     * to disable all dates after the input LocalDate value.
+     */
+    private LocalDate disableAfter = null;
+
+    /**
      * Constructor with Default Locale, This constructs a date picker settings instance using the
      * system default locale and language. The constructor populates all the settings with default
      * values.
@@ -1220,7 +1232,10 @@ public class DatePickerSettings {
         if (date == null) {
             return allowEmptyDates;
         }
-        return (!(InternalUtilities.isDateVetoed(vetoPolicy, date)));
+        return (!(InternalUtilities.isDateVetoed(vetoPolicy, date))
+                // Check the not null disableUntil and disableAfter attributes.
+                && !(disableUntil != null && date.compareTo(disableUntil) < 0)
+                && !(disableAfter != null && date.compareTo(disableAfter) > 0));
     }
 
     /**
@@ -2379,4 +2394,23 @@ public class DatePickerSettings {
         }
     }
 
+    public boolean isAllowEmptyDates() {
+        return allowEmptyDates;
+    }
+
+    public LocalDate getDisableUntil() {
+        return disableUntil;
+    }
+
+    public void setDisableUntil(LocalDate disableUntil) {
+        this.disableUntil = disableUntil;
+    }
+
+    public LocalDate getDisableAfter() {
+        return disableAfter;
+    }
+
+    public void setDisableAfter(LocalDate disableAfter) {
+        this.disableAfter = disableAfter;
+    }
 }

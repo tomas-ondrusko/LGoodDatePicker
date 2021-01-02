@@ -230,18 +230,6 @@ public class CalendarPanel extends JPanel {
     private JButton doneEditingYearButton;
     // JFormDesigner - End of variables declaration  //GEN-END:variables
 
-    /**
-     * disableUntil, This indicates whether the user decided
-     * to disable all dates until the input LocalDate value.
-     */
-    private final LocalDate disableUntil;
-
-    /**
-     * disableAfter, This indicates whether the user decided
-     * to disable all dates after the input LocalDate value.
-     */
-    private final LocalDate disableAfter;
-
     // Extracted MouseListeners into attributes for better dateLabel handling.
     private final MouseListener previousDateLabelMouseListener = new MouseLiberalAdapter() {
         @Override
@@ -268,30 +256,18 @@ public class CalendarPanel extends JPanel {
      * Constructor, Independent CalendarPanel with default settings. This creates an independent
      * calendar panel with a default set of DatePickerSettings. The calendar panel will use the
      * default operating system locale and language.
-     *
-     * Optionally pass disableUntil and disableAfter parameters.
      */
     public CalendarPanel() {
-        this(null, true, null, null);
-    }
-
-    public CalendarPanel(LocalDate disableUntil, LocalDate disableAfter) {
-        this(null, true, disableUntil, disableAfter);
+        this(null, true);
     }
 
     /**
      * Constructor, Independent CalendarPanel with supplied settings. This creates This creates an
      * independent calendar panel with the supplied date picker settings. If the datePickerSettings
      * are null, then a default settings instance will be created and applied to the CalendarPanel.
-     *
-     * Optionally pass disableUntil and disableAfter parameters.
      */
     public CalendarPanel(DatePickerSettings settings) {
-        this(settings, true, null, null);
-    }
-
-    public CalendarPanel(DatePickerSettings settings, LocalDate disableUntil, LocalDate disableAfter) {
-        this(settings, true, disableUntil, disableAfter);
+        this(settings, true);
     }
 
     /**
@@ -304,15 +280,9 @@ public class CalendarPanel extends JPanel {
      * new CalendarPanel is created every time the popup is opened. Therefore, any
      * DatePickerSettings variables that are initialized in this constructor are automatically able
      * to correctly handle being set either before or after, a DatePicker is constructed.
-     *
-     * Optionally pass disableUntil and disableAfter parameters.
      */
     public CalendarPanel(DatePicker parentDatePicker) {
-        this(parentDatePicker.getSettings(), false, null, null);
-    }
-
-    public CalendarPanel(DatePicker parentDatePicker, LocalDate disableUntil, LocalDate disableAfter) {
-        this(parentDatePicker.getSettings(), false, disableUntil, disableAfter);
+        this(parentDatePicker.getSettings(), false);
     }
 
     /**
@@ -322,26 +292,11 @@ public class CalendarPanel extends JPanel {
      * Note: None of the functions called from constructor, (or any functions called from those
      * functions) should depend on any settings variables.
      *
-     * Update the disableUntil and disableAfter attributes.
-     *
      * Exceptions to the above rule: # The setSettings() function. # Targets of listener functions.
      *
      */
     private CalendarPanel(DatePickerSettings datePickerSettings,
-                          boolean isIndependentCalendarPanelInstance,
-                          LocalDate disableUntil,
-                          LocalDate disableAfter) {
-        this.disableUntil = disableUntil;
-        this.disableAfter = disableAfter;
-
-        initCalendarPanel(datePickerSettings, isIndependentCalendarPanelInstance);
-    }
-
-    /**
-     * Initialize the CalendarPanel using the supplied date picker settings.
-     */
-    private void initCalendarPanel(DatePickerSettings datePickerSettings,
-                              boolean isIndependentCalendarPanelInstance) {
+                          boolean isIndependentCalendarPanelInstance) {
         // Save the information of whether this is an independent calendar panel.
         this.isIndependentCalendarPanel = isIndependentCalendarPanelInstance;
 
@@ -385,6 +340,7 @@ public class CalendarPanel extends JPanel {
         addTopLeftLabel();
         addWeekNumberLabels();
         addBorderLabels();
+
         // Save and apply the supplied settings.
         setSettings(datePickerSettings);
     }
@@ -1012,10 +968,8 @@ public class CalendarPanel extends JPanel {
             dateLabel.setBackground(new Color(245, 245, 245));
         }
 
-        if (InternalUtilities.isDateVetoed(settings.getVetoPolicy(), currentDate)
-                || (disableUntil != null && currentDate.compareTo(disableUntil) < 0)
-                || (disableAfter != null && currentDate.compareTo(disableAfter) > 0)) {
-            // Update foreground of the disabled dateLabel and return.
+        if (!settings.isDateAllowed(currentDate)) {
+            // Update foreground of the not allowed dateLabel and return.
             dateLabel.setForeground(Color.LIGHT_GRAY);
             return;
         }
@@ -1520,9 +1474,7 @@ public class CalendarPanel extends JPanel {
             }
         });
 
-        if ((settings != null && InternalUtilities.isDateVetoed(settings.getVetoPolicy(), LocalDate.now(settings.getClock())))
-                || (disableUntil != null && disableUntil.compareTo(LocalDate.now()) > 0)
-                || (disableAfter != null && disableAfter.compareTo(LocalDate.now()) < 0)) {
+        if ((settings != null && settings.isDateAllowed(LocalDate.now(settings.getClock())))) {
             labelSetDateToToday.setEnabled(false);
             return;
         }

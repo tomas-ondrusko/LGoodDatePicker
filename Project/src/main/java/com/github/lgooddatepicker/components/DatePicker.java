@@ -147,18 +147,6 @@ public class DatePicker extends JPanel implements CustomPopupCloseListener {
     // JFormDesigner - End of variables declaration  //GEN-END:variables
 
     /**
-     * disableUntil, This indicates whether the user decided
-     * to disable all dates until the input LocalDate value.
-     */
-    private LocalDate disableUntil;
-
-    /**
-     * disableAfter, This indicates whether the user decided
-     * to disable all dates after the input LocalDate value.
-     */
-    private LocalDate disableAfter;
-
-    /**
      * Constructor with Default Values, Create a date picker instance using the default operating
      * system locale and language, and default date picker settings.
      */
@@ -181,36 +169,22 @@ public class DatePicker extends JPanel implements CustomPopupCloseListener {
      * picker settings.
      */
     public DatePicker(DatePickerSettings settings) {
-        initDatePicker(settings);
+        this(settings, null, null);
     }
 
     /**
-     * Constructor with Custom Settings, Create a date picker instance using the supplied date
-     * picker settings and update the disableUntil and disableAfter LocalDate attributes.
+     * Constructor with Custom Settings and two LocalDate parameters, Create a date picker instance
+     * using the supplied date picker settings and pass the disableUntil and disableAfter values.
      */
     public DatePicker(DatePickerSettings settings, LocalDate disableUntil, LocalDate disableAfter) {
-        this.disableUntil = disableUntil;
-        this.disableAfter = disableAfter;
-        validateDates();
-
-        initDatePicker(settings);
+        initDatePicker(settings, disableUntil, disableAfter);
     }
 
     /**
-     * Validate the values of disableUntil and disableAfter attributes.
+     * Initialize the DatePicker using the supplied date picker settings and
+     * update the disableUntil and disableAfter values of date picker settings.
      */
-    private void validateDates() {
-        if (disableUntil != null && disableAfter != null && disableUntil.compareTo(disableAfter) > 0) {
-            throw new IllegalArgumentException("Invalid dates" + "\n" +
-                    "Disable until: " + disableUntil + "\n" +
-                    "Disable after: " + disableAfter);
-        }
-    }
-
-    /**
-     * Initialize the DatePicker using the supplied date picker settings.
-     */
-    public void initDatePicker(DatePickerSettings settings) {
+    public void initDatePicker(DatePickerSettings datePickerSettings, LocalDate disableUntil, LocalDate disableAfter) {
         initComponents();
         this.convert = new Convert(this);
         // Shrink the toggle calendar button to a reasonable size.
@@ -218,7 +192,24 @@ public class DatePicker extends JPanel implements CustomPopupCloseListener {
         // Add a change listener to the text field.
         zAddTextChangeListener();
         // Save and apply the supplied settings.
-        setSettings(settings);
+        setSettings(datePickerSettings);
+        // Set and validate the disableUntil and disableAfter values of date picker settings.
+        settings.setDisableUntil(disableUntil);
+        settings.setDisableAfter(disableAfter);
+        validateDates();
+    }
+
+    /**
+     * Validate the disableUntil and disableAfter values of date picker settings.
+     */
+    private void validateDates() {
+        LocalDate disableUntil = settings.getDisableUntil();
+        LocalDate disableAfter = settings.getDisableAfter();
+        if (disableUntil != null && disableAfter != null && disableUntil.compareTo(disableAfter) > 0) {
+            throw new IllegalArgumentException("Invalid dates" + "\n" +
+                    "Disable until: " + disableUntil + "\n" +
+                    "Disable after: " + disableAfter);
+        }
     }
 
     /**
@@ -548,7 +539,7 @@ public class DatePicker extends JPanel implements CustomPopupCloseListener {
         LocalDate selectedDateForCalendar = lastValidDate;
 
         // Create a CalenderPanel for this DatePicker class.
-        calendarPanel = new CalendarPanel(this, disableUntil, disableAfter);
+        calendarPanel = new CalendarPanel(this);
 
         fireComponentEvent(new ComponentEvent(ComponentEvent.PREVIOUS_YEAR, calendarPanel.getPreviousYearButton()));
         fireComponentEvent(new ComponentEvent(ComponentEvent.PREVIOUS_MONTH, calendarPanel.getPreviousMonthButton()));
@@ -707,18 +698,18 @@ public class DatePicker extends JPanel implements CustomPopupCloseListener {
     }
 
     /**
-     * Update disableUntil attribute and validate.
+     * Update disableUntil value and validate.
      */
     public void disableUntil(LocalDate disableUntil) {
-        this.disableUntil = disableUntil;
+        settings.setDisableUntil(disableUntil);
         validateDates();
     }
 
     /**
-     * Update disableAfter attribute and validate.
+     * Update disableAfter value and validate.
      */
     public void disableAfter(LocalDate disableAfter) {
-        this.disableAfter = disableAfter;
+        settings.setDisableAfter(disableAfter);
         validateDates();
     }
 
