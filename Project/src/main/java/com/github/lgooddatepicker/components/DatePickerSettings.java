@@ -2394,10 +2394,6 @@ public class DatePickerSettings {
         }
     }
 
-    public boolean isAllowEmptyDates() {
-        return allowEmptyDates;
-    }
-
     public LocalDate getDisableUntil() {
         return disableUntil;
     }
